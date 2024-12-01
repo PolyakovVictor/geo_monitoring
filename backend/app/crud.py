@@ -1,11 +1,11 @@
 from sqlalchemy.orm import Session
-from .models import SensorData
+from .models import SensorDataModel
 from .schemas import SensorDataCreate
 from typing import List
 
 
 def create_sensor_data(db: Session, data: SensorDataCreate):
-    sensor_data = SensorData(**data.dict())
+    sensor_data = SensorDataModel(**data.dict())
     db.add(sensor_data)
     db.commit()
     db.refresh(sensor_data)
@@ -13,11 +13,11 @@ def create_sensor_data(db: Session, data: SensorDataCreate):
 
 
 def get_sensor_data(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(SensorData).offset(skip).limit(limit).all()
+    return db.query(SensorDataModel).offset(skip).limit(limit).all()
 
 
-def save_sensor_data(db: Session, data: List[SensorData]):
+def save_sensor_data(db: Session, data: List[SensorDataModel]):
     for entry in data:
-        sensor_entry = SensorData(**entry.dict())
+        sensor_entry = SensorDataModel(**entry.dict())
         db.add(sensor_entry)
     db.commit()

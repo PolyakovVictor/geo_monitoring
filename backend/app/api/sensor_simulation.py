@@ -1,39 +1,73 @@
 import random
 from datetime import datetime
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from typing import List
-from ..schemas import SensorData
+from ..schemas import SensorData, SensorDataBase
+from sqlalchemy.orm import Session
+from ..db import get_db
+from ..models import SensorDataModel
+
 
 router = APIRouter()
 
 
-# Список імітованих датчиків
-SENSORS = ["sensor_1", "sensor_2", "sensor_3", "sensor_4"]
-POLLUTANTS = ["CO2", "NO2", "SO2", "PM2.5"]
+# Попередньо визначені райони
+REGIONS = [
+    "Industrial Zone A",
+    "Industrial Zone B",
+    "Residential Zone C",
+    "Commercial Zone D",
+]
 
 
-# Функція для генерації випадкових даних
-def generate_sensor_data() -> List[SensorData]:
-    data = []
-    for sensor_id in SENSORS:
-        pollutant = random.choice(POLLUTANTS)
-        value = round(random.uniform(0.1, 500), 2)  # Значення в межах
-        timestamp = datetime.now()
-        data.append(
-            SensorData(
-                sensor_id=sensor_id,
-                pollutant=pollutant,
-                value=value,
-                timestamp=timestamp,
-            )
+def generate_sensor_data(db: Session):
+    pollutants = ["PM2.5", "PM10", "SO2", "NO2", "CO", "O3"]
+    sensor_ids = [f"sensor_{i}" for i in range(1, 11)]
+
+    for _ in range(100):  # Генеруємо 100 записів
+        data = SensorDataModel(
+            sensor_id=random.choice(sensor_ids),
+            pollutant=random.choice(pollutants),
+            value=round(random.uniform(10, 300), 2),
+            timestamp=datetime.utcnow(),
+            region=random.choice(REGIONS),  # Додаємо випадковий район
         )
-    return data
+        db.add(data)
+    db.commit()
 
 
 # Ендпоінт для отримання даних датчиків
-@router.get("/sensors", response_model=List[SensorData])
-def get_fake_sensor_data():
+@router.get("/sensors")
+def get_fake_sensor_data(db: Session = Depends(get_db)):
     """
     Повертає імітовані дані від датчиків.
     """
-    return generate_sensor_data()
+    return generate_sensor_data(db)
+
+
+@router.get("/regions", response_model=any)
+def get_data_by_region(db: Session = Depends(get_db)):
+    data = db.query(
+        SensorDataModel.region,
+        SensorDataModel.pollutant,
+        SensorDataModel.value,
+        SensorDataModel.timestamp,
+    ).all()
+    result = {}
+
+    if not data:  # Якщо даних немає
+        return []  # Повертаємо пустий список
+
+    for record in data:
+        region = record.region
+        if region not in result:
+            result[region] = []
+        result[region].append(
+            {
+                "pollutant": record.pollutant,
+                "value": record.value,
+                "timestamp": record.timestamp,
+            }
+        )
+
+    return [{"region": key, "data": values} for key, values in result.items()]

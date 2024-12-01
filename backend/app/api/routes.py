@@ -1,19 +1,11 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
-from ..db import SessionLocal
 from ..crud import create_sensor_data, get_sensor_data, save_sensor_data
 from ..schemas import SensorDataCreate, SensorDataOut
 from .sensor_simulation import generate_sensor_data
+from ..db import get_db
 
 router = APIRouter()
-
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 
 @router.post("/data", response_model=SensorDataOut)
@@ -28,6 +20,6 @@ def read_data(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
 
 @router.post("/save")
 def save_fake_data(db: Session = Depends(get_db)):
-    data = generate_sensor_data()
+    data = generate_sensor_data(db)
     save_sensor_data(db, data)
     return {"status": "Data saved", "count": len(data)}

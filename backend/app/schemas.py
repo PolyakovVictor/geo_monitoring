@@ -17,3 +17,14 @@ class SensorData(BaseModel):
     pollutant: str
     value: float
     timestamp: datetime
+
+
+class SensorDataBase(BaseModel):
+    sensor_id: str
+    pollutant: str
+    value: float
+    timestamp: datetime
+    region: str  # Нове поле
+
+    class Config:
+        orm_mode = True
