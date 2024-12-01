@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:14 # Використовуємо офіційний образ PostgreSQL
+    container_name: postgres
+    environment:
+      POSTGRES_USER: myuser        # Задаємо ім'я користувача
+      POSTGRES_PASSWORD: mypassword  # Задаємо пароль
+      POSTGRES_DB: pollution_monitoring  # Назва бази даних
+    volumes:
+      - postgres_data:/var/lib/postgresql/data  # Постійну зберігання даних
+    ports:
+      - "5432:5432" # Відкриваємо порт для підключення до БД ззовні
+
+volumes:
+  postgres_data: # Тому що ми хочемо зберігати дані між перезапусками контейнера

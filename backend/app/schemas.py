@@ -10,3 +10,10 @@ class SensorDataCreate(BaseModel):
 
 class SensorDataOut(SensorDataCreate):
     timestamp: datetime
+
+
+class SensorData(BaseModel):
+    sensor_id: str
+    pollutant: str
+    value: float
+    timestamp: datetime

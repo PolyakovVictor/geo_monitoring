@@ -10,3 +10,4 @@ class SensorData(Base):
     pollutant = Column(String)
     value = Column(Float)
     timestamp = Column(DateTime)
+    region = Column(String)  # Нове поле для району
