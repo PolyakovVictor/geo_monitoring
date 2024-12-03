@@ -1,8 +1,6 @@
 import random
 from datetime import datetime
 from fastapi import APIRouter, Depends
-from typing import List
-from ..schemas import SensorData, SensorDataBase
 from sqlalchemy.orm import Session
 from ..db import get_db
 from ..models import SensorDataModel
@@ -45,7 +43,7 @@ def get_fake_sensor_data(db: Session = Depends(get_db)):
     return generate_sensor_data(db)
 
 
-@router.get("/regions", response_model=any)
+@router.get("/regions")
 def get_data_by_region(db: Session = Depends(get_db)):
     data = db.query(
         SensorDataModel.region,
