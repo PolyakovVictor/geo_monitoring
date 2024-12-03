@@ -21,3 +21,12 @@ class EmissionData(Base):
     city = Column(String, nullable=True)  # Місто (може бути пустим)
     year = Column(Integer)  # Рік
     emissions = Column(Float)  # Кількість викидів (тис. т)
+
+
+class EmissionData2(Base):
+    __tablename__ = "emission_data2"
+
+    id = Column(Integer, primary_key=True, index=True)
+    region = Column(String, index=True)  # Регіон
+    year = Column(Integer)  # Рік
+    emissions = Column(Float)  # Кількість викидів (тис. т)
