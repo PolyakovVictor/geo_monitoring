@@ -1,25 +1,29 @@
-from app.api.sensor_simulation import router as sensor_simulation_router
 from fastapi import FastAPI
-from .api.routes import router
-from .db import Base, engine
 from fastapi.middleware.cors import CORSMiddleware
 
+from .api import router
+from .db import Base, engine
 
+
+# Створення таблиць
 Base.metadata.create_all(bind=engine)
 
-app = FastAPI()
+# Ініціалізація FastAPI додатку
+app = FastAPI(title="Environmental Monitoring System")
+
+# CORS middleware для фронтенду
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Дозволити всі джерела
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.include_router(router, prefix="/api")
 
-app.include_router(
-    sensor_simulation_router, prefix="/api/simulation", tags=["Simulation"]
-)
+# Приклад використання
+if __name__ == "__main__":
+    import uvicorn
 
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Дозволити всі джерела, або вкажіть ["http://localhost:3000"]
-    allow_credentials=True,
-    allow_methods=["*"],  # Дозволити всі методи
-    allow_headers=["*"],  # Дозволити всі заголовки
-)
+    uvicorn.run(app, host="0.0.0.0", port=8000)

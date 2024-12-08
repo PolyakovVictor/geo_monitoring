@@ -2,23 +2,38 @@ from pydantic import BaseModel
 from datetime import datetime
 
 
-class SensorDataBase(BaseModel):
+# Pydantic моделі для валідації
+class SensorDataCreate(BaseModel):
     sensor_id: str
-    pollutant: str
-    value: float
+    location: str
+
+    # Гази
+    nitrogen_dioxide: float
+    sulfur_dioxide: float
+    carbon_monoxide: float
+    ozone: float
+
+    # Дрібнодисперсні частинки
+    pm2_5: float
+    pm10: float
+
+    # Важкі метали
+    lead: float
+    cadmium: float
+
+    # Метеорологічні параметри
+    temperature: float
+    humidity: float
+    wind_speed: float
+    wind_direction: float
+
+    # Радіація
+    radiation_level: float
+
+
+class SensorDataResponse(SensorDataCreate):
+    id: int
     timestamp: datetime
-    region: str
 
     class Config:
         orm_mode = True
-
-
-class SensorDataCreate(BaseModel):
-    sensor_id: str
-    pollutant: str
-    value: float
-    region: str  # Поле для вказання району
-
-
-class SensorDataOut(SensorDataBase):
-    id: int  # Додаємо поле для ідентифікатора

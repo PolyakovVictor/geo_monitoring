@@ -27,7 +27,6 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend)
 
 interface EmissionData {
   region: string;
-  city: string | null;
   year: number;
   emissions: number;
 }
@@ -92,7 +91,6 @@ const EmissionStats: React.FC = () => {
           <TableHead>
             <TableRow>
               <TableCell><strong>Region</strong></TableCell>
-              <TableCell><strong>City</strong></TableCell>
               <TableCell><strong>Year</strong></TableCell>
               <TableCell><strong>Emissions (thousands of tons)</strong></TableCell>
             </TableRow>
@@ -101,7 +99,6 @@ const EmissionStats: React.FC = () => {
             {emissions.map((row, index) => (
               <TableRow key={index}>
                 <TableCell>{row.region}</TableCell>
-                <TableCell>{row.city || "N/A"}</TableCell>
                 <TableCell>{row.year}</TableCell>
                 <TableCell>{row.emissions}</TableCell>
               </TableRow>

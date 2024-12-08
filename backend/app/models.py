@@ -1,32 +1,36 @@
+from datetime import datetime
 from sqlalchemy import Column, Integer, String, Float, DateTime
 from .db import Base
 
 
-class SensorDataModel(Base):
-    __tablename__ = "sensor_data"
+# Модель бази даних
+class SensorData(Base):
+    __tablename__ = "sensor_readings"
 
     id = Column(Integer, primary_key=True, index=True)
     sensor_id = Column(String, index=True)
-    pollutant = Column(String)
-    value = Column(Float)
-    timestamp = Column(DateTime)
-    region = Column(String)  # Нове поле для району
+    location = Column(String)
+    timestamp = Column(DateTime, default=datetime.utcnow)
 
+    # Гази
+    nitrogen_dioxide = Column(Float)
+    sulfur_dioxide = Column(Float)
+    carbon_monoxide = Column(Float)
+    ozone = Column(Float)
 
-class EmissionData(Base):
-    __tablename__ = "emission_data"
+    # Дрібнодисперсні частинки
+    pm2_5 = Column(Float)
+    pm10 = Column(Float)
 
-    id = Column(Integer, primary_key=True, index=True)
-    region = Column(String, index=True)  # Регіон
-    city = Column(String, nullable=True)  # Місто (може бути пустим)
-    year = Column(Integer)  # Рік
-    emissions = Column(Float)  # Кількість викидів (тис. т)
+    # Важкі метали
+    lead = Column(Float)
+    cadmium = Column(Float)
 
+    # Метеорологічні параметри
+    temperature = Column(Float)
+    humidity = Column(Float)
+    wind_speed = Column(Float)
+    wind_direction = Column(Float)
 
-class EmissionData2(Base):
-    __tablename__ = "emission_data2"
-
-    id = Column(Integer, primary_key=True, index=True)
-    region = Column(String, index=True)  # Регіон
-    year = Column(Integer)  # Рік
-    emissions = Column(Float)  # Кількість викидів (тис. т)
+    # Радіація
+    radiation_level = Column(Float)
