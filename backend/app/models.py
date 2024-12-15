@@ -10,9 +10,10 @@ class SensorData(Base):
     id = Column(Integer, primary_key=True, index=True)
     sensor_id = Column(String, index=True)
     location = Column(String)
-    timestamp = Column(DateTime, default=datetime.utcnow)
+    region = Column(String, index=True)
+    timestamp = Column(DateTime, default=datetime.utcnow, index=True)
 
-    # Гази
+    # Основні показники забруднення
     nitrogen_dioxide = Column(Float)
     sulfur_dioxide = Column(Float)
     carbon_monoxide = Column(Float)
@@ -26,11 +27,9 @@ class SensorData(Base):
     lead = Column(Float)
     cadmium = Column(Float)
 
-    # Метеорологічні параметри
+    # Додаткові параметри
     temperature = Column(Float)
     humidity = Column(Float)
     wind_speed = Column(Float)
     wind_direction = Column(Float)
-
-    # Радіація
     radiation_level = Column(Float)
