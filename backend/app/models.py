@@ -1,16 +1,15 @@
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, Float, DateTime
+from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey
+from sqlalchemy.orm import relationship
 from .db import Base
 
 
-# Модель бази даних
 class SensorData(Base):
     __tablename__ = "sensor_readings"
 
     id = Column(Integer, primary_key=True, index=True)
     sensor_id = Column(String, index=True)
-    location = Column(String)
-    region = Column(String, index=True)
+    location_id = Column(Integer, ForeignKey('locations.id'), index=True)
     timestamp = Column(DateTime, default=datetime.utcnow, index=True)
 
     # Основні показники забруднення
@@ -33,3 +32,16 @@ class SensorData(Base):
     wind_speed = Column(Float)
     wind_direction = Column(Float)
     radiation_level = Column(Float)
+
+    location_obj = relationship("Location", back_populates="sensor_data")
+
+
+class Location(Base):
+    __tablename__ = "locations"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, unique=True, index=True)
+    latitude = Column(Float, nullable=True)
+    longitude = Column(Float, nullable=True)
+
+    sensor_data = relationship("SensorData", back_populates="location_obj")

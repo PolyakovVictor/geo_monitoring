@@ -1,11 +1,29 @@
 from pydantic import BaseModel
 from datetime import datetime
+from typing import Optional
+
+
+class LocationBase(BaseModel):
+    name: str
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+
+
+class LocationCreate(LocationBase):
+    pass
+
+
+class LocationResponse(LocationBase):
+    id: int
+
+    class Config:
+        orm_mode = True
 
 
 class SensorDataCreate(BaseModel):
     sensor_id: str
-    location: str
-    region: str
+    location_id: int
+    timestamp: datetime
 
     # Повторюємо всі поля з моделі SensorData
     nitrogen_dioxide: float
@@ -29,6 +47,7 @@ class SensorDataCreate(BaseModel):
 class SensorDataResponse(SensorDataCreate):
     id: int
     timestamp: datetime
+    location: LocationResponse
 
     class Config:
         orm_mode = True
