@@ -1,69 +1,161 @@
-import React, { useEffect, useState } from "react";
-import { Bar } from "react-chartjs-2";
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from "chart.js";
-import { Typography, Box } from "@mui/material";
-import axios from "axios";
+import React, { useState, useEffect } from 'react';
+import { 
+  Container, 
+  Typography, 
+  Box, 
+  FormControl, 
+  InputLabel, 
+  Select, 
+  SelectChangeEvent, 
+  MenuItem,
+  Button,
+  TextField
+} from '@mui/material';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFnsV3';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import axios from 'axios';
 
-// Реєстрація модулів Chart.js
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
-
-interface RegionData {
-  region: string;
-  data: Array<{
-    pollutant: string;
-    value: number;
-    timestamp: string;
-  }>;
+// TypeScript interfaces for our data structures
+interface Location {
+  id: number;
+  name: string;
 }
 
-const Charts: React.FC = () => {
-  const [chartData, setChartData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+interface SensorData {
+  id: number;
+  timestamp: string;
+  nitrogen_dioxide: number;
+  sulfur_dioxide: number;
+  pm2_5: number;
+  carbon_monoxide: number;
+}
 
+// Utility function to format date
+const formatDate = (date: Date) => {
+  return date.toISOString().split('T')[0];
+};
+
+export const PollutionChart: React.FC = () => {
+  // State management
+  const [locations, setLocations] = useState<Location[]>([]);
+  const [selectedLocation, setSelectedLocation] = useState<number | ''>('');
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
+  const [sensorData, setSensorData] = useState<SensorData[]>([]);
+
+  // Fetch locations on component mount
   useEffect(() => {
-    axios
-      .get("http://localhost:8000/api/simulation/regions")
-      .then((response) => {
-        const data: RegionData[] = response.data;
-
-        // Генерація даних для графіку
-        const regionNames = data.map((item) => item.region);
-        const pollutantLevels = data.map((item) =>
-          item.data.reduce((acc, curr) => acc + curr.value, 0)
-        );
-
-        setChartData({
-          labels: regionNames,
-          datasets: [
-            {
-              label: "Pollution Levels",
-              data: pollutantLevels,
-              backgroundColor: "rgba(75, 192, 192, 0.2)",
-              borderColor: "rgba(75, 192, 192, 1)",
-              borderWidth: 1,
-            },
-          ],
-        });
-      })
-      .catch((error) => {
-        console.error("Error fetching data:", error);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+    const fetchLocations = async () => {
+      try {
+        const response = await axios.get('http://localhost:8000/api/locations');
+        setLocations(response.data);
+      } catch (error) {
+        console.error('Failed to fetch locations', error);
+      }
+    };
+    fetchLocations();
   }, []);
 
-  if (loading) return <Typography>Loading...</Typography>;
-  if (!chartData) return <Typography>Error loading chart data.</Typography>;
+  // Fetch sensor data when location and dates are selected
+  const fetchSensorData = async () => {
+    if (!selectedLocation || !startDate || !endDate) return;
+
+    try {
+      const response = await axios.get(`http://localhost:8000/api/sensor-data/location/${selectedLocation}`, {
+        params: {
+          start_date: startDate.toISOString(),
+          end_date: endDate.toISOString()
+        }
+      });
+      setSensorData(response.data.sensor_data);
+    } catch (error) {
+      console.error('Failed to fetch sensor data', error);
+    }
+  };
+
+  // Prepare chart data
+  const chartData = sensorData.map(data => ({
+    date: formatDate(new Date(data.timestamp)),
+    'Nitrogen Dioxide': data.nitrogen_dioxide,
+    'Sulfur Dioxide': data.sulfur_dioxide,
+    'PM 2.5': data.pm2_5,
+    'Carbon Monoxide': data.carbon_monoxide
+  }));
 
   return (
-    <Box>
-      <Typography variant="h4" gutterBottom>
-        Pollution Levels by Region
-      </Typography>
-      <Bar data={chartData} />
-    </Box>
+    <LocalizationProvider dateAdapter={AdapterDateFns}>
+      <Container maxWidth="lg">
+        <Box sx={{ my: 4 }}>
+          <Typography variant="h4" gutterBottom>
+            Environmental Pollution Monitoring
+          </Typography>
+
+          <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+            <FormControl fullWidth>
+              <InputLabel>Location</InputLabel>
+              <Select
+                value={selectedLocation}
+                label="Location"
+                onChange={(e: SelectChangeEvent<number>) => 
+                  setSelectedLocation(e.target.value as number)
+                }
+              >
+                {locations.map(location => (
+                  <MenuItem key={location.id} value={location.id}>
+                    {location.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <DatePicker
+              label="Start Date"
+              value={startDate}
+              onChange={(newValue) => setStartDate(newValue)}
+              slots={{ textField: TextField }}
+            />
+
+            <DatePicker
+              label="End Date"
+              value={endDate}
+              onChange={(newValue) => setEndDate(newValue)}
+              slots={{ textField: TextField }}
+            />
+
+            <Button 
+              variant="contained" 
+              onClick={fetchSensorData}
+              disabled={!selectedLocation || !startDate || !endDate}
+            >
+              Load Data
+            </Button>
+          </Box>
+
+          {sensorData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={400}>
+              <LineChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Line type="monotone" dataKey="Nitrogen Dioxide" stroke="#8884d8" />
+                <Line type="monotone" dataKey="Sulfur Dioxide" stroke="#82ca9d" />
+                <Line type="monotone" dataKey="PM 2.5" stroke="#ffc658" />
+                <Line type="monotone" dataKey="Carbon Monoxide" stroke="#ff7300" />
+              </LineChart>
+            </ResponsiveContainer>
+          ) : (
+            <Typography variant="body1" color="textSecondary" align="center">
+              Select location and date range to view pollution data
+            </Typography>
+          )}
+        </Box>
+      </Container>
+    </LocalizationProvider>
   );
 };
 
-export default Charts;
+export default PollutionChart;

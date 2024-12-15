@@ -21,6 +21,12 @@ def create_location(location: LocationCreate, db: Session = Depends(get_db)):
     return db_location
 
 
+@router.get("/locations")
+def read_locations(db: Session = Depends(get_db)):
+    locations = db.query(Location).all()
+    return locations
+
+
 @router.get("/sensor-data/")
 def get_sensor_data(
     location_id: Optional[int] = Query(None),
