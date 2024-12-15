@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from datetime import datetime, timedelta
-from typing import Optional
+from typing import List, Optional
 
 from .db import get_db
 from .models import SensorData, Location
@@ -25,6 +25,47 @@ def create_location(location: LocationCreate, db: Session = Depends(get_db)):
 def read_locations(db: Session = Depends(get_db)):
     locations = db.query(Location).all()
     return locations
+
+
+@router.get("/locations/pollution-summary/")
+def get_location_pollution_summary(
+    location_ids: List[int] = Query(None),
+    start_date: Optional[datetime] = Query(None),
+    end_date: Optional[datetime] = Query(None),
+    db: Session = Depends(get_db)
+):
+    if not start_date:
+        start_date = datetime.now() - timedelta(days=365)
+    if not end_date:
+        end_date = datetime.now()
+
+    query = (
+        db.query(
+            Location.id,
+            Location.name,
+            func.avg(SensorData.nitrogen_dioxide).label("avg_nitrogen_dioxide"),
+            func.avg(SensorData.sulfur_dioxide).label("avg_sulfur_dioxide"),
+            func.avg(SensorData.pm2_5).label("avg_pm2_5"),
+        )
+        .join(SensorData)
+        .filter(SensorData.timestamp.between(start_date, end_date))
+    )
+
+    if location_ids:
+        query = query.filter(Location.id.in_(location_ids))
+
+    location_pollution = query.group_by(Location.id, Location.name).all()
+
+    return [
+        {
+            "location_id": loc[0],
+            "location_name": loc[1],
+            "avg_nitrogen_dioxide": round(loc[2], 2),
+            "avg_sulfur_dioxide": round(loc[3], 2),
+            "avg_pm2_5": round(loc[4], 2),
+        }
+        for loc in location_pollution
+    ]
 
 
 @router.get("/sensor-data/")

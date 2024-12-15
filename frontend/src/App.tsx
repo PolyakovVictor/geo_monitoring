@@ -1,7 +1,7 @@
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Layout from "./components/Layout";
-import Dashboard from "./components/Dashboard";
+import PollutionComparisonChart from "./components/Dashboard";
 import Charts from "./components/Charts";
 import EmissionStats from './components/EmissionStats'
 
@@ -10,7 +10,7 @@ const App: React.FC = () => {
     <Router>
       <Layout>
         <Routes>
-          <Route path="/" element={<Dashboard />} />
+          <Route path="/" element={<PollutionComparisonChart />} />
           <Route path="/charts" element={<Charts />} />
           <Route path="/emission" element={<EmissionStats />}/>
         </Routes>
