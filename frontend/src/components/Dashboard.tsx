@@ -1,25 +1,7 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React from 'react';
 import { 
-  Container, 
-  Typography, 
-  Box, 
-  FormControl, 
-  InputLabel, 
-  Select, 
-  SelectChangeEvent, 
-  MenuItem,
-  Button,
-  TextField,
-  Chip,
-  CircularProgress,
-  Alert
-} from '@mui/material';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFnsV3';
-import { 
-  BarChart, 
-  Bar, 
+  LineChart, 
+  Line, 
   XAxis, 
   YAxis, 
   CartesianGrid, 
@@ -27,208 +9,212 @@ import {
   Legend, 
   ResponsiveContainer 
 } from 'recharts';
-import axios from 'axios';
-import { startOfYear, subYears } from 'date-fns';
+import { 
+  Radar, 
+  RadarChart, 
+  PolarGrid, 
+  PolarAngleAxis, 
+  PolarRadiusAxis 
+} from 'recharts';
+import { 
+  Card, 
+  CardContent, 
+  Typography, 
+  Grid, 
+  Box 
+} from '@mui/material';
 
-// Updated TypeScript interfaces to match the new API response
-interface Location {
-  id: number;
-  name: string;
-  longitude: number;
-  latitude: number;
-}
-
-interface PollutionSummary {
-  location_id: number;
-  location_name: string;
-  avg_nitrogen_dioxide: number;
-  avg_sulfur_dioxide: number;
-  avg_pm2_5: number;
-}
-
-interface ChartData {
-  name: string;
-  'Nitrogen Dioxide': number;
-  'Sulfur Dioxide': number;
-  'PM 2.5': number;
-}
-
-export const PollutionComparisonChart: React.FC = () => {
-  // State management
-  const [locations, setLocations] = useState<Location[]>([]);
-  const [selectedLocations, setSelectedLocations] = useState<number[]>([]);
-  const [startDate, setStartDate] = useState<Date | null>(null);
-  const [endDate, setEndDate] = useState<Date | null>(null);
-  const [pollutionData, setPollutionData] = useState<PollutionSummary[]>([]);
-  
-  // UI state
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  // Set default date range
-  useEffect(() => {
-    const defaultStartDate = startOfYear(subYears(new Date(), 1));
-    const defaultEndDate = new Date();
-    
-    setStartDate(defaultStartDate);
-    setEndDate(defaultEndDate);
-  }, []);
-
-  // Fetch locations
-  useEffect(() => {
-    const fetchLocations = async () => {
-      try {
-        const response = await axios.get<Location[]>('http://localhost:8000/api/locations');
-        setLocations(response.data);
-      } catch (error) {
-        setError('Не вдалося завантажити локації');
-        console.error('Failed to fetch locations', error);
-      }
-    };
-    fetchLocations();
-  }, []);
-
-  // Fetch pollution comparison data
-  const fetchPollutionComparison = async () => {
-    if (selectedLocations.length === 0 || !startDate || !endDate) return;
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const params = new URLSearchParams();
-      selectedLocations.forEach(locId => params.append('location_ids', locId.toString()));
-      console.log(params)
-      params.append('start_date', startDate.toISOString());
-      params.append('end_date', endDate.toISOString());
-
-      const response = await axios.get<PollutionSummary[]>(
-        'http://localhost:8000/api/locations/pollution-summary/', 
-        { params: Object.fromEntries(params) }
-      );
-      setPollutionData(response.data);
-    } catch (error) {
-      setError('Не вдалося отримати дані про забруднення');
-      console.error('Failed to fetch pollution comparison', error);
-    } finally {
-      setIsLoading(false);
-    }
+// Types for Air Quality Data
+interface AirQualityData {
+  timestamp: string;
+  airQualityScore: number;
+  description: string;
+  detailedParameters: {
+    PM2_5: number;
+    PM10: number;
+    NO2: number;
+    SO2: number;
+    CO: number;
+    Ozone: number;
+    Lead: number;
+    Cadmium: number;
+    Radiation: number;
   };
+}
 
-  // Prepare chart data
-  const chartData = useMemo<ChartData[]>(() => {
-    return pollutionData.map(data => ({
-      name: data.location_name,
-      'Nitrogen Dioxide': data.avg_nitrogen_dioxide,
-      'Sulfur Dioxide': data.avg_sulfur_dioxide,
-      'PM 2.5': data.avg_pm2_5
-    }));
-  }, [pollutionData]);
+// Mock data generation function (replace with actual API call)
+const generateMockAirQualityData = (): AirQualityData[] => {
+  const mockData: AirQualityData[] = [];
+  const pollutants = [
+    { PM2_5: 73.07, PM10: 119.04, NO2: 109.27, SO2: 383.24, 
+      CO: 13.67, Ozone: 111.43, Lead: 0.4096, Cadmium: 0.1545, Radiation: 2.39 },
+    { PM2_5: 62.15, PM10: 95.33, NO2: 87.54, SO2: 312.76, 
+      CO: 10.22, Ozone: 89.76, Lead: 0.3212, Cadmium: 0.1123, Radiation: 1.87 },
+    { PM2_5: 85.42, PM10: 135.67, NO2: 128.91, SO2: 425.33, 
+      CO: 16.54, Ozone: 132.15, Lead: 0.5234, Cadmium: 0.2345, Radiation: 3.12 }
+  ];
 
-  // Handle location selection
-  const handleLocationChange = (event: SelectChangeEvent<number[]>) => {
-    const value = event.target.value;
-    setSelectedLocations(
-      typeof value === 'string' ? value.split(',').map(Number) : value
-    );
-  };
+  pollutants.forEach((pollution, index) => {
+    // Simulate fuzzy logic air quality evaluation
+    const simulatedScore = Math.min(Math.max(
+      (pollution.PM2_5 / 100 + 
+       pollution.NO2 / 500 + 
+       pollution.SO2 / 500 + 
+       pollution.Ozone / 300) / 4 * 10, 
+    0), 10);
+
+    mockData.push({
+      timestamp: `2024-01-${15 + index}`,
+      airQualityScore: simulatedScore,
+      description: simulatedScore <= 2 ? 'Excellent' : 
+                   simulatedScore <= 4 ? 'Good' : 
+                   simulatedScore <= 6 ? 'Moderate' : 
+                   simulatedScore <= 8 ? 'Poor' : 'Hazardous',
+      detailedParameters: pollution
+    });
+  });
+
+  return mockData;
+};
+
+// Air Quality Score Line Chart Component
+export const AirQualityScoreChart: React.FC = () => {
+  const airQualityData = generateMockAirQualityData();
 
   return (
-    <LocalizationProvider dateAdapter={AdapterDateFns}>
-      <Container maxWidth="lg">
-        <Box sx={{ my: 4 }}>
-          <Typography variant="h4" gutterBottom>
-            Порівняння забруднення за локаціями
-          </Typography>
-
-          {error && (
-            <Alert severity="error" sx={{ mb: 2 }}>
-              {error}
-            </Alert>
-          )}
-
-          <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
-            <FormControl fullWidth>
-              <InputLabel>Локації</InputLabel>
-              <Select
-                multiple
-                value={selectedLocations}
-                label="Локації"
-                onChange={handleLocationChange}
-                renderValue={(selected) => (
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                    {selected.map((value) => {
-                      const location = locations.find(loc => loc.id === value);
-                      return (
-                        <Chip 
-                          key={value} 
-                          label={location ? location.name : value} 
-                        />
-                      );
-                    })}
-                  </Box>
-                )}
-              >
-                {locations.map((location) => (
-                  <MenuItem 
-                    key={location.id} 
-                    value={location.id}
-                  >
-                    {location.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            <DatePicker
-              label="Початкова дата"
-              value={startDate}
-              onChange={(newValue) => setStartDate(newValue)}
-              slots={{ textField: TextField }}
+    <Card>
+      <CardContent>
+        <Typography variant="h6" gutterBottom>
+          Air Quality Score Over Time
+        </Typography>
+        <ResponsiveContainer width="100%" height={300}>
+          <LineChart data={airQualityData}>
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="timestamp" />
+            <YAxis 
+              domain={[0, 10]} 
+              ticks={[0, 2, 4, 6, 8, 10]} 
+              label={{ value: 'Air Quality Score', angle: -90, position: 'insideLeft' }} 
             />
-
-            <DatePicker
-              label="Кінцева дата"
-              value={endDate}
-              onChange={(newValue) => setEndDate(newValue)}
-              slots={{ textField: TextField }}
+            <Tooltip 
+              formatter={(value, name, props) => {
+                // Type-safe conversion
+                const numValue = typeof value === 'number' 
+                  ? value 
+                  : typeof value === 'string' 
+                    ? parseFloat(value) 
+                    : 0;
+                
+                const data = props.payload as AirQualityData;
+                return [`${numValue.toFixed(2)} (${data.description})`, 'Air Quality Score'];
+              }}
             />
-
-            <Button 
-              variant="contained" 
-              onClick={fetchPollutionComparison}
-              disabled={selectedLocations.length === 0 || !startDate || !endDate || isLoading}
-            >
-              {isLoading ? <CircularProgress size={24} /> : 'Порівняти забруднення'}
-            </Button>
-          </Box>
-
-          {isLoading ? (
-            <Box display="flex" justifyContent="center" my={4}>
-              <CircularProgress />
-            </Box>
-          ) : pollutionData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={400}>
-              <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis label={{ value: 'Рівень забруднення', angle: -90, position: 'insideLeft' }} />
-                <Tooltip />
-                <Legend />
-                <Bar dataKey="Nitrogen Dioxide" fill="#8884d8" />
-                <Bar dataKey="Sulfur Dioxide" fill="#82ca9d" />
-                <Bar dataKey="PM 2.5" fill="#ffc658" />
-              </BarChart>
-            </ResponsiveContainer>
-          ) : (
-            <Typography variant="body1" color="textSecondary" align="center">
-              Виберіть локації та діапазон дат для порівняння рівнів забруднення
-            </Typography>
-          )}
-        </Box>
-      </Container>
-    </LocalizationProvider>
+            <Legend />
+            <Line 
+              type="monotone" 
+              dataKey="airQualityScore" 
+              stroke="#8884d8" 
+              activeDot={{ r: 8 }} 
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </CardContent>
+    </Card>
   );
 };
 
-export default PollutionComparisonChart;
+// Pollutant Levels Radar Chart Component
+export const PollutantLevelsRadarChart: React.FC = () => {
+  const airQualityData = generateMockAirQualityData();
+  const latestData = airQualityData[airQualityData.length - 1].detailedParameters;
+
+  // Normalize data for radar chart
+  const radarData = [
+    { 
+      pollutant: 'PM2.5', 
+      value: Math.min(latestData.PM2_5 / 3, 100),
+      fullMark: 100 
+    },
+    { 
+      pollutant: 'PM10', 
+      value: Math.min(latestData.PM10 / 3, 100),
+      fullMark: 100 
+    },
+    { 
+      pollutant: 'NO2', 
+      value: Math.min(latestData.NO2 / 5, 100),
+      fullMark: 100 
+    },
+    { 
+      pollutant: 'SO2', 
+      value: Math.min(latestData.SO2 / 5, 100),
+      fullMark: 100 
+    },
+    { 
+      pollutant: 'CO', 
+      value: Math.min(latestData.CO * 3.33, 100),
+      fullMark: 100 
+    },
+    { 
+      pollutant: 'Ozone', 
+      value: Math.min(latestData.Ozone / 3, 100),
+      fullMark: 100 
+    },
+  ];
+
+  return (
+    <Card>
+      <CardContent>
+        <Typography variant="h6" gutterBottom>
+          Pollutant Levels Comparison
+        </Typography>
+        <ResponsiveContainer width="100%" height={300}>
+          <RadarChart data={radarData}>
+            <PolarGrid />
+            <PolarAngleAxis dataKey="pollutant" />
+            <PolarRadiusAxis angle={30} domain={[0, 100]} />
+            <Radar 
+              name="Pollutant Levels" 
+              dataKey="value" 
+              stroke="#8884d8" 
+              fill="#8884d8" 
+              fillOpacity={0.6} 
+            />
+            <Tooltip 
+              formatter={(value, name, props) => {
+                // Type-safe conversion
+                const numValue = typeof value === 'number' 
+                  ? value 
+                  : typeof value === 'string' 
+                    ? parseFloat(value) 
+                    : 0;
+                
+                const data = props.payload.payload;
+                return [`${numValue.toFixed(2)}`, data.pollutant];
+              }}
+            />
+            <Legend />
+          </RadarChart>
+        </ResponsiveContainer>
+      </CardContent>
+    </Card>
+  );
+};
+
+// Main Dashboard Component
+export const AirQualityDashboard: React.FC = () => {
+  return (
+    <Box sx={{ flexGrow: 1, p: 2 }}>
+      <Grid container spacing={2}>
+        <Grid item xs={12} md={6}>
+          <AirQualityScoreChart />
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <PollutantLevelsRadarChart />
+        </Grid>
+      </Grid>
+    </Box>
+  );
+};
+
+export default AirQualityDashboard;
