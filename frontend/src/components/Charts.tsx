@@ -9,7 +9,14 @@ import {
   SelectChangeEvent, 
   MenuItem,
   Button,
-  TextField
+  TextField,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -30,6 +37,15 @@ interface SensorData {
   sulfur_dioxide: number;
   pm2_5: number;
   carbon_monoxide: number;
+  ozone: number;
+  pm10: number;
+  cadmium: number;
+  lead: number;
+  radiation_level: number;
+  temperature: number;
+  humidity: number;
+  wind_speed: number;
+  wind_direction: number;
 }
 
 // Utility function to format date
@@ -134,19 +150,64 @@ export const PollutionChart: React.FC = () => {
           </Box>
 
           {sensorData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={400}>
-              <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Line type="monotone" dataKey="Nitrogen Dioxide" stroke="#8884d8" />
-                <Line type="monotone" dataKey="Sulfur Dioxide" stroke="#82ca9d" />
-                <Line type="monotone" dataKey="PM 2.5" stroke="#ffc658" />
-                <Line type="monotone" dataKey="Carbon Monoxide" stroke="#ff7300" />
-              </LineChart>
-            </ResponsiveContainer>
+            <>
+              <ResponsiveContainer width="100%" height={400}>
+                <LineChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="date" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Line type="monotone" dataKey="Nitrogen Dioxide" stroke="#8884d8" />
+                  <Line type="monotone" dataKey="Sulfur Dioxide" stroke="#82ca9d" />
+                  <Line type="monotone" dataKey="PM 2.5" stroke="#ffc658" />
+                  <Line type="monotone" dataKey="Carbon Monoxide" stroke="#ff7300" />
+                </LineChart>
+              </ResponsiveContainer>
+
+              <TableContainer component={Paper} sx={{ mt: 4 }}>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Date</TableCell>
+                      <TableCell>Nitrogen Dioxide</TableCell>
+                      <TableCell>Sulfur Dioxide</TableCell>
+                      <TableCell>PM 2.5</TableCell>
+                      <TableCell>Carbon Monoxide</TableCell>
+                      <TableCell>Ozone</TableCell>
+                      <TableCell>PM 10</TableCell>
+                      <TableCell>Cadmium</TableCell>
+                      <TableCell>Lead</TableCell>
+                      <TableCell>Radiation Level</TableCell>
+                      <TableCell>Temperature</TableCell>
+                      <TableCell>Humidity</TableCell>
+                      <TableCell>Wind Speed</TableCell>
+                      <TableCell>Wind Direction</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {sensorData.map((data) => (
+                      <TableRow key={data.id}>
+                        <TableCell>{formatDate(new Date(data.timestamp))}</TableCell>
+                        <TableCell>{data.nitrogen_dioxide}</TableCell>
+                        <TableCell>{data.sulfur_dioxide}</TableCell>
+                        <TableCell>{data.pm2_5}</TableCell>
+                        <TableCell>{data.carbon_monoxide}</TableCell>
+                        <TableCell>{data.ozone}</TableCell>
+                        <TableCell>{data.pm10}</TableCell>
+                        <TableCell>{data.cadmium}</TableCell>
+                        <TableCell>{data.lead}</TableCell>
+                        <TableCell>{data.radiation_level}</TableCell>
+                        <TableCell>{data.temperature}</TableCell>
+                        <TableCell>{data.humidity}</TableCell>
+                        <TableCell>{data.wind_speed}</TableCell>
+                        <TableCell>{data.wind_direction}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </>
           ) : (
             <Typography variant="body1" color="textSecondary" align="center">
               Select location and date range to view pollution data

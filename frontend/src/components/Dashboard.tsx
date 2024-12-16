@@ -98,6 +98,7 @@ export const PollutionComparisonChart: React.FC = () => {
     try {
       const params = new URLSearchParams();
       selectedLocations.forEach(locId => params.append('location_ids', locId.toString()));
+      console.log(params)
       params.append('start_date', startDate.toISOString());
       params.append('end_date', endDate.toISOString());
 
