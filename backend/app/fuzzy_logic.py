@@ -198,7 +198,18 @@ class AdvancedAirQualityFuzzySystem:
             }
 
         except Exception as e:
-            return {"error": str(e)}
+            # Логування помилки для діагностики
+            print(f"Помилка у evaluate_air_quality: {e}")
+            
+            # Повернення структури за замовчуванням з ключем 'score'
+            return {
+                "score": 0.0,  # Значення за замовчуванням
+                "description": "Дані недоступні",
+                "health_recommendation": "Не вдалося розрахувати якість повітря.",
+                "detailed_parameters": data,
+                "error": str(e)
+            }
+
 
 
 def main():

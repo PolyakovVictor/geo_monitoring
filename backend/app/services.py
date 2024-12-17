@@ -24,20 +24,20 @@ class EnvironmentalDataGenerator:
             sensor_data = SensorDataCreate(
                 sensor_id=f"sensor_{location_id}",
                 location_id=location_id,
-                timestamp=current_date,  # Встановлюємо поточний час у проміжку
-                nitrogen_dioxide=round(random.uniform(20, 200), 2),
-                sulfur_dioxide=round(random.uniform(50, 500), 2),
-                carbon_monoxide=round(random.uniform(1, 30), 2),
-                ozone=round(random.uniform(10, 120), 2),
-                pm2_5=round(random.uniform(10, 100), 2),
-                pm10=round(random.uniform(20, 150), 2),
-                lead=round(random.uniform(0.01, 1.0), 4),
-                cadmium=round(random.uniform(0.001, 0.5), 4),
-                temperature=round(random.uniform(-5, 35), 1),
-                humidity=round(random.uniform(30, 90), 1),
-                wind_speed=round(random.uniform(0, 15), 1),
+                timestamp=current_date,
+                nitrogen_dioxide=round(random.uniform(10, 50), 2),
+                sulfur_dioxide=round(random.uniform(20, 150), 2),
+                carbon_monoxide=round(random.uniform(0.5, 10), 2),
+                ozone=round(random.uniform(5, 50), 2),
+                pm2_5=round(random.uniform(5, 40), 2),
+                pm10=round(random.uniform(10, 70), 2),
+                lead=round(random.uniform(0.005, 0.5), 4),
+                cadmium=round(random.uniform(0.0005, 0.1), 4),
+                temperature=round(random.uniform(-10, 30), 1),
+                humidity=round(random.uniform(20, 80), 1),
+                wind_speed=round(random.uniform(0, 10), 1),
                 wind_direction=round(random.uniform(0, 360), 1),
-                radiation_level=round(random.uniform(0.1, 5), 2),
+                radiation_level=round(random.uniform(0.05, 2.5), 2),
             )
             sensor_data_list.append(sensor_data)
 
