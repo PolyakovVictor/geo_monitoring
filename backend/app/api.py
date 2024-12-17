@@ -206,7 +206,7 @@ def get_air_quality_for_location(
 ):
     """
     Отримання оцінки якості повітря для певної локації
-    
+
     Параметри:
     - location_id: ID локації
     - start_date: Початкова дата (опціонально)
@@ -283,7 +283,7 @@ def get_air_quality_for_location(
 
 @router.get("/air-quality/comparative-analysis")
 def comparative_air_quality_analysis(
-    location_ids: List[int] = Query(...),
+    location_ids: List[int] = Query(..., description="List of location IDs"),
     start_date: Optional[datetime] = Query(None),
     end_date: Optional[datetime] = Query(None),
     db: Session = Depends(get_db)
@@ -301,15 +301,15 @@ def comparative_air_quality_analysis(
             'average',
             db
         )
-        
+
         results.append({
             'location_id': location_id,
             'air_quality': location_result['air_quality']
         })
-    
+
     # Сортування локацій за якістю повітря
     results_sorted = sorted(results, key=lambda x: x['air_quality']['score'])
-    
+
     return {
         "comparative_analysis": results_sorted,
         "best_location": results_sorted[0],

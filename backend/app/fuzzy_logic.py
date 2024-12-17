@@ -74,65 +74,65 @@ class AdvancedAirQualityFuzzySystem:
         rules = [
             # Правило 1: Низькі забруднення у всіх параметрах
             ctrl.Rule(
-                self.pm25['low'] & self.pm10['low'] & 
-                self.no2['low'] & self.so2['low'] & 
-                self.co['low'] & self.ozone['low'] & 
-                self.lead['low'] & self.cadmium['low'] & 
-                self.radiation['safe'], 
+                self.pm25['low'] & self.pm10['low'] &
+                self.no2['low'] & self.so2['low'] &
+                self.co['low'] & self.ozone['low'] &
+                self.lead['low'] & self.cadmium['low'] &
+                self.radiation['safe'],
                 self.air_quality['excellent']
             ),
 
             # Правило 2: Помірне забруднення дрібнодисперсними частинками
             ctrl.Rule(
-                (self.pm25['moderate'] | self.pm10['moderate']) & 
-                self.no2['low'] & self.so2['low'] & 
-                self.co['low'] & self.ozone['low'], 
+                (self.pm25['moderate'] | self.pm10['moderate']) &
+                self.no2['low'] & self.so2['low'] &
+                self.co['low'] & self.ozone['low'],
                 self.air_quality['good']
             ),
 
             # Правило 3: Підвищене забруднення газами
             ctrl.Rule(
                 self.pm25['low'] & 
-                (self.no2['moderate'] | self.so2['moderate'] | self.co['moderate']), 
+                (self.no2['moderate'] | self.so2['moderate'] | self.co['moderate']),
                 self.air_quality['moderate']
             ),
 
             # Правило 4: Висока концентрація озону
             ctrl.Rule(
-                self.ozone['high'], 
+                self.ozone['high'],
                 self.air_quality['poor']
             ),
 
             # Правило 5: Важкі метали та радіація
             ctrl.Rule(
-                (self.lead['high'] | self.cadmium['high'] | self.radiation['high']), 
+                (self.lead['high'] | self.cadmium['high'] | self.radiation['high']),
                 self.air_quality['hazardous']
             ),
 
             # Правило 6: Комбінація помірних забруднень
             ctrl.Rule(
-                (self.pm25['moderate'] | self.pm10['moderate']) & 
-                (self.no2['moderate'] | self.so2['moderate']) & 
-                self.co['moderate'], 
+                (self.pm25['moderate'] | self.pm10['moderate']) &
+                (self.no2['moderate'] | self.so2['moderate']) &
+                self.co['moderate'],
                 self.air_quality['poor']
             ),
 
             # Правило 7: Високе забруднення дрібнодисперсними частинками
             ctrl.Rule(
-                (self.pm25['high'] | self.pm10['high']), 
+                (self.pm25['high'] | self.pm10['high']),
                 self.air_quality['poor']
             ),
 
             # Правило 8: Критичне забруднення газами
             ctrl.Rule(
-                (self.no2['high'] | self.so2['high'] | self.co['high']), 
+                (self.no2['high'] | self.so2['high'] | self.co['high']),
                 self.air_quality['hazardous']
             ),
 
             # Правило 9: Складна комбінація забруднень
             ctrl.Rule(
-                self.pm25['high'] & self.no2['high'] & 
-                self.so2['high'] & self.ozone['high'], 
+                self.pm25['high'] & self.no2['high'] &
+                self.so2['high'] & self.ozone['high'],
                 self.air_quality['hazardous']
             )
         ]
@@ -201,9 +201,7 @@ class AdvancedAirQualityFuzzySystem:
             return {"error": str(e)}
 
 
-# Приклад використання
 def main():
-    # Приклад даних з попереднього прикладу
     sample_data = {
         "pm2_5": 73.07,
         "pm10": 119.04,
@@ -219,6 +217,7 @@ def main():
     fuzzy_system = AdvancedAirQualityFuzzySystem()
     result = fuzzy_system.evaluate_air_quality(sample_data)
     print(json.dumps(result, indent=2, ensure_ascii=False))
+
 
 if __name__ == "__main__":
     main()
