@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Layout from "./components/Layout";
 import AirQualityDashboard from "./components/Dashboard";
 import Charts from "./components/Charts";
-import EmissionStats from './components/EmissionStats'
+import AirQualityLocationsComponent from './components/EmissionStats'
 
 const App: React.FC = () => {
   return (
@@ -12,7 +12,7 @@ const App: React.FC = () => {
         <Routes>
           <Route path="/" element={<AirQualityDashboard />} />
           <Route path="/charts" element={<Charts />} />
-          <Route path="/emission" element={<EmissionStats />}/>
+          <Route path="/emission" element={<AirQualityLocationsComponent />}/>
         </Routes>
       </Layout>
     </Router>

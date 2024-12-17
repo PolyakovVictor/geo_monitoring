@@ -264,6 +264,7 @@ def get_air_quality_for_location(
     elif aggregation_method == 'best':
         aggregated_result = min(fuzzy_results, key=lambda x: x['air_quality_result']['score'])
     else:  # average
+        print(fuzzy_results)
         total_score = sum(result['air_quality_result']['score'] for result in fuzzy_results)
         avg_score = total_score / len(fuzzy_results)
 

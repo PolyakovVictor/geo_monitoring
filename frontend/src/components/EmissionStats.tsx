@@ -1,113 +1,192 @@
-import React, { useEffect, useState } from "react";
-import { Bar } from "react-chartjs-2";
-import {
-  Box,
-  Typography,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
+import React, { useState, useEffect } from 'react';
+import { 
+  Typography, 
+  Container, 
+  Paper, 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableContainer, 
+  TableHead, 
   TableRow,
-  Paper,
-} from "@mui/material";
-import axios from "axios";
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-} from "chart.js";
+  Grid,
+  Chip,
+  Button,
+  Box,
+  CircularProgress
+} from '@mui/material';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFnsV3';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import axios from 'axios';
+import FilterListIcon from '@mui/icons-material/FilterList';
+import { format } from 'date-fns';
 
-// Реєстрація модулів Chart.js
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
-
-interface EmissionData {
-  region: string;
-  year: number;
-  emissions: number;
+interface AirQualityLocation {
+  location_id: number;
+  air_quality: {
+    score: number;
+    description: string;
+    health_recommendation: string;
+  };
 }
 
-const EmissionStats: React.FC = () => {
-  const [emissions, setEmissions] = useState<EmissionData[]>([]);
-  const [chartData, setChartData] = useState<any>(null);
+const getChipColor = (description: string) => {
+  switch (description) {
+    case 'Відмінна': return 'success';
+    case 'Добра': return 'primary';
+    case 'Задовільна': return 'warning';
+    case 'Погана': return 'error';
+    case 'Небезпечна': return 'error';
+    default: return 'default';
+  }
+};
+
+export const AirQualityLocationsComponent: React.FC = () => {
+  const [startDate, setStartDate] = useState<Date | null>(new Date(new Date().setMonth(new Date().getMonth() - 1)));
+  const [endDate, setEndDate] = useState<Date | null>(new Date());
+  const [locations, setLocations] = useState<AirQualityLocation[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  const fetchLocations = async () => {
+    try {
+      setIsLoading(true);
+      
+      // Отримання списку локацій
+      const locationsResponse = await axios.get('http://localhost:8000/api/locations');
+      const locationIds = locationsResponse.data.map((loc: any) => loc.id);
+
+      // Перевірка, чи є locationIds
+      if (locationIds.length === 0) {
+        console.error('Не знайдено жодної локації');
+        return;
+      }
+
+      // Формування параметрів запиту
+      const params = new URLSearchParams();
+      locationIds.forEach((location_id: any) => params.append('location_ids', location_id));
+      
+      if (startDate) {
+        params.append('start_date', format(startDate, "yyyy-MM-dd'T'HH:mm:ss.SSSxxx"));
+      }
+      if (endDate) {
+        params.append('end_date', format(endDate, "yyyy-MM-dd'T'HH:mm:ss.SSSxxx"));
+      }
+
+      // Виконання запиту з правильними параметрами
+      const airQualityResponse = await axios.get(
+        'http://localhost:8000/api/air-quality/comparative-analysis', 
+        { params }
+      );
+
+      setLocations(airQualityResponse.data.comparative_analysis);
+    } catch (error) {
+      console.error('Помилка завантаження даних:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    // Отримання даних із бекенду
-    axios.get("http://localhost:8000/api/emissions").then((response) => {
-      const data: EmissionData[] = response.data;
-      setEmissions(data);
-
-      // Групування даних для графіка
-      const groupedByRegion = data.reduce((acc: any, item) => {
-        if (!acc[item.region]) acc[item.region] = 0;
-        acc[item.region] += item.emissions;
-        return acc;
-      }, {});
-
-      setChartData({
-        labels: Object.keys(groupedByRegion),
-        datasets: [
-          {
-            label: "Emissions by Region (thousands of tons)",
-            data: Object.values(groupedByRegion),
-            backgroundColor: "rgba(75, 192, 192, 0.2)",
-            borderColor: "rgba(75, 192, 192, 1)",
-            borderWidth: 1,
-          },
-        ],
-      });
-    });
+    fetchLocations();
   }, []);
 
+  const handleFilter = () => {
+    fetchLocations();
+  };
+
   return (
-    <Box>
-      {/* Заголовок */}
-      <Typography variant="h4" gutterBottom>
-        Emission Statistics
-      </Typography>
-
-      {/* Графік */}
-      {chartData ? (
-        <Box sx={{ mb: 4 }}>
-          <Typography variant="h5" gutterBottom>
-            Total Emissions by Region
-          </Typography>
-          <Bar data={chartData} />
+    <LocalizationProvider dateAdapter={AdapterDateFns}>
+      <Container>
+        <Typography variant="h4" sx={{ mb: 3 }}>
+          Моніторинг забруднення атмосфери
+        </Typography>
+        
+        <Box sx={{ 
+          display: 'flex', 
+          flexDirection: { xs: 'column', md: 'row' }, 
+          alignItems: 'center', 
+          gap: 2, 
+          mb: 3 
+        }}>
+          <DatePicker 
+            label="Початкова дата" 
+            value={startDate} 
+            onChange={(newValue) => setStartDate(newValue)} 
+            slotProps={{ 
+              textField: { 
+                fullWidth: true,
+                variant: 'outlined'
+              } 
+            }} 
+          />
+          <DatePicker 
+            label="Кінцева дата" 
+            value={endDate} 
+            onChange={(newValue) => setEndDate(newValue)} 
+            slotProps={{ 
+              textField: { 
+                fullWidth: true,
+                variant: 'outlined'
+              } 
+            }} 
+          />
+          <Button 
+            variant="contained" 
+            startIcon={<FilterListIcon />}
+            onClick={handleFilter}
+            disabled={isLoading}
+            sx={{ 
+              height: '56px', 
+              minWidth: '120px' 
+            }}
+          >
+            {isLoading ? 'Завантаження...' : 'Фільтр'}
+          </Button>
         </Box>
-      ) : (
-        <Typography>Loading chart...</Typography>
-      )}
 
-      {/* Таблиця */}
-      <Typography variant="h5" gutterBottom>
-        Detailed Emission Data
-      </Typography>
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell><strong>Region</strong></TableCell>
-              <TableCell><strong>Year</strong></TableCell>
-              <TableCell><strong>Emissions (thousands of tons)</strong></TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {emissions.map((row, index) => (
-              <TableRow key={index}>
-                <TableCell>{row.region}</TableCell>
-                <TableCell>{row.year}</TableCell>
-                <TableCell>{row.emissions}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
-    </Box>
+        {isLoading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+            <CircularProgress />
+          </Box>
+        ) : (
+          <TableContainer component={Paper}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>ID Локації</TableCell>
+                  <TableCell>Рівень забруднення</TableCell>
+                  <TableCell>Опис</TableCell>
+                  <TableCell>Рекомендації</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {locations.map((location) => (
+                  <TableRow key={location.location_id}>
+                    <TableCell>{location.location_id}</TableCell>
+                    <TableCell>
+                      <Chip 
+                        label={location.air_quality.score.toFixed(2)} 
+                        color={getChipColor(location.air_quality.description)}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Typography>{location.air_quality.description}</Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2">
+                        {location.air_quality.health_recommendation}
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
+      </Container>
+    </LocalizationProvider>
   );
 };
 
-export default EmissionStats;
+export default AirQualityLocationsComponent;
