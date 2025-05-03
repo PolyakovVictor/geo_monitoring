@@ -1,8 +1,8 @@
 from datetime import datetime, timedelta
 import random
 
-from .models import SensorData, Location
-from .schemas import SensorDataCreate
+from models import SensorData, Location
+from schemas import SensorDataCreate
 
 
 class EnvironmentalDataGenerator:

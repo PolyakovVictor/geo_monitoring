@@ -1,8 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .api import router
-from .db import Base, engine
+from api import router
+from db import Base, engine
 
 
 # Створення таблиць

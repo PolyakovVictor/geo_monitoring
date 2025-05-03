@@ -4,11 +4,11 @@ from sqlalchemy import func
 from datetime import datetime, timedelta
 from typing import List, Optional
 
-from .db import get_db
-from .models import SensorData, Location
-from .services import simulate_sensor_data_for_location
-from .schemas import LocationCreate
-from .fuzzy_logic import AdvancedAirQualityFuzzySystem
+from db import get_db
+from models import SensorData, Location
+from services import simulate_sensor_data_for_location
+from schemas import LocationCreate
+from fuzzy_logic import AdvancedAirQualityFuzzySystem
 
 router = APIRouter()
 

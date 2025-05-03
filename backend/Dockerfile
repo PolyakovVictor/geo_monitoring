@@ -1,10 +1,17 @@
-# Використовуємо офіційний образ PostgreSQL
-FROM postgres:14
+FROM python:3.12
 
-# Копіюємо SQL-скрипти для ініціалізації бази даних
-COPY init.sql /docker-entrypoint-initdb.d/
+# Встановлення poetry
+RUN pip install poetry
 
-# Вказуємо, що база даних використовуватиме зазначену версію
-ENV POSTGRES_USER=myuser
-ENV POSTGRES_PASSWORD=mypassword
-ENV POSTGRES_DB=pollution_monitoring
+# Робоча директорія
+WORKDIR /app
+
+# Копіюємо файли залежностей
+COPY ./pyproject.toml ./poetry.lock* /app/
+
+# Встановлюємо залежності
+RUN poetry config virtualenvs.create false
+#   && poetry install --no-root --no-interaction --no-ansi
+
+# Копіюємо код додатку
+COPY . /app

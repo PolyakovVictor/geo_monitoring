@@ -9,13 +9,15 @@ readme = "README.md"
 python = "^3.12"
 fastapi = "^0.115.5"
 uvicorn = "^0.32.1"
-psycopg2 = "^2.9.10"
 pydantic = "^2.10.2"
 sqlalchemy = "^2.0.36"
 scikit-fuzzy = "^0.5.0"
 numpy = "^2.2.0"
 scipy = "^1.14.1"
 networkx = "^3.4.2"
+psycopg2-binary = "^2.9.10"
+packaging = "^25.0"
+python-dotenv = "^1.1.0"
 
 
 [build-system]
