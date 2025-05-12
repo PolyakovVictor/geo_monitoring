@@ -1,16 +1,21 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from datetime import datetime, timedelta
 from typing import List, Optional
+import pandas as pd
+import os
 
 from db import get_db
 from models import SensorData, Location
 from services import simulate_sensor_data_for_location
 from schemas import LocationCreate
 from fuzzy_logic import AdvancedAirQualityFuzzySystem
+from app.ai_model import PollutionPredictionModel
 
 router = APIRouter()
+model = PollutionPredictionModel()
+MODEL_FILEPATH = "app/model.pkl"
 
 
 @router.post("/locations/")
@@ -316,3 +321,101 @@ def comparative_air_quality_analysis(
         "best_location": results_sorted[0],
         "worst_location": results_sorted[-1]
     }
+
+
+@router.post("/train-model/")
+def train_model(file: UploadFile = File(...)):
+    """
+    Навчання моделі на основі завантаженого CSV-файлу.
+    """
+    try:
+        # Завантаження даних
+        df = pd.read_csv(file.file)
+
+        # Перевірка наявності стовпця "target"
+        if "Target" not in df.columns:
+            raise HTTPException(status_code=400, detail="Стовпець 'target' відсутній у файлі.")
+
+        X = df.drop(columns=["Target"])  # Замініть "target" на назву цільового стовпця
+        y = df["Target"]
+
+        # Навчання моделі
+        model.train(X, y)
+        model.save_model(MODEL_FILEPATH)
+        return {"message": "Модель успішно навчена та збережена."}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.post("/predict/")
+def predict(data: dict):
+    """
+    Прогнозування рівня забруднення на основі вхідних даних.
+    """
+    try:
+        if not os.path.exists(MODEL_FILEPATH):
+            raise HTTPException(status_code=400, detail="Модель не знайдена. Спочатку навчіть модель.")
+
+        model.load_model(MODEL_FILEPATH)
+
+        # Перетворення назв ознак для відповідності моделі
+        feature_mapping = {
+            "pm2_5": "PM2.5",
+            "pm10": "PM10",
+            "nitrogen_dioxide": "Nitrogen Dioxide",
+            "sulfur_dioxide": "Sulfur Dioxide",
+            "carbon_monoxide": "Carbon Monoxide",
+            "ozone": "Ozone",
+            "lead": "Lead",
+            "cadmium": "Cadmium",
+            "radiation_level": "Radiation"
+        }
+        transformed_data = {feature_mapping[key]: value for key, value in data.items()}
+
+        X = pd.DataFrame([transformed_data])
+        prediction = model.predict(X)
+        return {"prediction": prediction.tolist()}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.get("/locations/pollution-summary-extended/")
+def get_location_pollution_summary_extended(
+    location_ids: List[int] = Query(None),
+    start_date: Optional[datetime] = Query(None),
+    end_date: Optional[datetime] = Query(None),
+    db: Session = Depends(get_db)
+):
+    """
+    Розширений підсумок забруднення для локацій.
+    """
+    if not start_date:
+        start_date = datetime.now() - timedelta(days=365)
+    if not end_date:
+        end_date = datetime.now()
+
+    query = (
+        db.query(
+            Location.id,
+            Location.name,
+            func.avg(SensorData.nitrogen_dioxide).label("avg_nitrogen_dioxide"),
+            func.avg(SensorData.sulfur_dioxide).label("avg_sulfur_dioxide"),
+            func.avg(SensorData.pm2_5).label("avg_pm2_5"),
+        )
+        .join(SensorData)
+        .filter(SensorData.timestamp.between(start_date, end_date))
+    )
+
+    if location_ids:
+        query = query.filter(Location.id.in_(location_ids))
+
+    location_pollution = query.group_by(Location.id, Location.name).all()
+
+    return [
+        {
+            "location_id": loc[0],
+            "location_name": loc[1],
+            "avg_nitrogen_dioxide": round(loc[2], 2),
+            "avg_sulfur_dioxide": round(loc[3], 2),
+            "avg_pm2_5": round(loc[4], 2),
+        }
+        for loc in location_pollution
+    ]

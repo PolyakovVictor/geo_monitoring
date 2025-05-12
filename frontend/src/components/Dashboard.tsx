@@ -33,7 +33,7 @@ const AirQualityTrendChart: React.FC = () => {
   const [detailedParameters, setDetailedParameters] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [dataWithDetails, setDataWithDetails] = useState<any[]>([]);
-
+  const [modelPredictions, setModelPredictions] = useState<number[]>([]);
 
   // Fetch locations
   useEffect(() => {
@@ -67,12 +67,13 @@ const AirQualityTrendChart: React.FC = () => {
       setDataWithDetails(data);
 
       // Chart data
+      const scores = data.map((item: any) => item.air_quality_result.score);
       setChartData({
         labels: data.map((item: any) => new Date(item.timestamp).toLocaleDateString()),
         datasets: [
           {
             label: 'Air Quality Score',
-            data: data.map((item: any) => item.air_quality_result.score),
+            data: scores,
             fill: false,
             borderColor: 'rgba(75, 192, 192, 1)',
             backgroundColor: 'rgba(75, 192, 192, 0.2)',
@@ -81,8 +82,8 @@ const AirQualityTrendChart: React.FC = () => {
           },
         ],
       });
+
       // Table data
-      
       setDetailedParameters(
         data.map((reading: any) => ({
           timestamp: reading.timestamp,
@@ -90,6 +91,43 @@ const AirQualityTrendChart: React.FC = () => {
           ...reading.air_quality_result.detailed_parameters,
         }))
       );
+
+      // Analyze data with the model
+      const predictions = await Promise.all(
+        data.map(async (reading: any) => {
+          const response = await axios.post('http://localhost:8000/api/predict/', {
+            pm2_5: reading.air_quality_result.detailed_parameters['PM2.5'],
+            pm10: reading.air_quality_result.detailed_parameters.PM10,
+            nitrogen_dioxide: reading.air_quality_result.detailed_parameters.NO2,
+            sulfur_dioxide: reading.air_quality_result.detailed_parameters.SO2,
+            carbon_monoxide: reading.air_quality_result.detailed_parameters.CO,
+            ozone: reading.air_quality_result.detailed_parameters.Ozone,
+            lead: reading.air_quality_result.detailed_parameters.Lead,
+            cadmium: reading.air_quality_result.detailed_parameters.Cadmium,
+            radiation_level: reading.air_quality_result.detailed_parameters.Radiation,
+          });
+          return response.data.prediction[0];
+        })
+      );
+
+      setModelPredictions(predictions);
+
+      // Add model predictions to the chart
+      setChartData((prevData: any) => ({
+        ...prevData,
+        datasets: [
+          ...prevData.datasets,
+          {
+            label: 'Model Prediction',
+            data: predictions,
+            fill: false,
+            borderColor: 'rgba(255, 99, 132, 1)',
+            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+            pointRadius: 5,
+            pointHoverRadius: 8,
+          },
+        ],
+      }));
     } catch (error) {
       console.error('Error fetching trend data', error);
     }
@@ -148,35 +186,29 @@ const AirQualityTrendChart: React.FC = () => {
         ) : chartData ? (
           <>
             <Line
-          data={chartData}
-          options={{
-            responsive: true,
-            plugins: {
-              tooltip: {
-                callbacks: {
-                  // Кастомізуємо контент для tooltip
-                  label: (context: any) => {
-                    const index = context.dataIndex;
-                    const details = dataWithDetails[index];
-
-                    return [
-                      `Score: ${context.formattedValue}`,
-                      `Description: ${details.air_quality_result.description}`,
-                      `PM10: ${details.air_quality_result.detailed_parameters.PM10}`,
-                      `NO2: ${details.air_quality_result.detailed_parameters.NO2}`,
-                      `SO2: ${details.air_quality_result.detailed_parameters.SO2}`,
-                      `CO: ${details.air_quality_result.detailed_parameters.CO}`,
-                    ];
+              data={chartData}
+              options={{
+                responsive: true,
+                plugins: {
+                  tooltip: {
+                    callbacks: {
+                      label: (context: any) => {
+                        const index = context.dataIndex;
+                        const details = dataWithDetails[index];
+                        return [
+                          `Score: ${context.formattedValue}`,
+                          `Description: ${details.air_quality_result.description}`,
+                        ];
+                      },
+                    },
+                  },
+                  title: {
+                    display: true,
+                    text: 'Air Quality Trends with Details',
                   },
                 },
-              },
-              title: {
-                display: true,
-                text: 'Air Quality Trends with Details',
-              },
-            },
-          }}
-        />
+              }}
+            />
             {/* Table */}
             <Box mt={4}>
               <Typography variant="h6" gutterBottom>
@@ -188,6 +220,7 @@ const AirQualityTrendChart: React.FC = () => {
                     <TableRow>
                       <TableCell>Date</TableCell>
                       <TableCell>Description</TableCell>
+                      <TableCell>PM2.5</TableCell>
                       <TableCell>PM10</TableCell>
                       <TableCell>NO2</TableCell>
                       <TableCell>SO2</TableCell>
@@ -203,6 +236,7 @@ const AirQualityTrendChart: React.FC = () => {
                       <TableRow key={index}>
                         <TableCell>{new Date(param.timestamp).toLocaleDateString()}</TableCell>
                         <TableCell>{param.description}</TableCell>
+                        <TableCell>{param['PM2.5']}</TableCell>
                         <TableCell>{param.PM10}</TableCell>
                         <TableCell>{param.NO2}</TableCell>
                         <TableCell>{param.SO2}</TableCell>
