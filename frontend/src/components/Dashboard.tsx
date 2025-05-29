@@ -67,20 +67,26 @@ const AirQualityTrendChart: React.FC = () => {
       setDataWithDetails(data);
 
       // Chart data
-      const scores = data.map((item: any) => item.air_quality_result.score);
+      // const scores = data.map((item: any) => item.air_quality_result.score);
+      // setChartData({
+      //   labels: data.map((item: any) => new Date(item.timestamp).toLocaleDateString()),
+      //   datasets: [
+      //     {
+      //       label: 'Air Quality Score',
+      //       data: scores,
+      //       fill: false,
+      //       borderColor: 'rgba(75, 192, 192, 1)',
+      //       backgroundColor: 'rgba(75, 192, 192, 0.2)',
+      //       pointRadius: 5,
+      //       pointHoverRadius: 8,
+      //     },
+      //   ],
+      // });
+
+      const scores = null;
       setChartData({
         labels: data.map((item: any) => new Date(item.timestamp).toLocaleDateString()),
-        datasets: [
-          {
-            label: 'Air Quality Score',
-            data: scores,
-            fill: false,
-            borderColor: 'rgba(75, 192, 192, 1)',
-            backgroundColor: 'rgba(75, 192, 192, 0.2)',
-            pointRadius: 5,
-            pointHoverRadius: 8,
-          },
-        ],
+        datasets: [],
       });
 
       // Table data
